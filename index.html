@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grad Prep — Sign up / Log in</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script defer src="script.js"></script>
+</head>
+<body data-supabase-url="https://dtmqecmuynheejxnyfrn.supabase.co" data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ">
+  <main class="wrap">
+    <h1>Grad Prep</h1>
+    <p>Create an account, verify your email, then access the dashboard.</p>
+
+    <section class="card">
+      <h2>Sign up</h2>
+      <form id="signup-form">
+        <label>Email <input type="email" id="signup-email" required></label>
+        <label>Password <input type="password" id="signup-password" minlength="6" required></label>
+        <button type="submit">Create account</button>
+      </form>
+      <p class="hint">You will receive a verification email. Click the link to verify and return.</p>
+    </section>
+
+    <section class="card">
+      <h2>Log in</h2>
+      <form id="login-form">
+        <label>Email <input type="email" id="login-email" required></label>
+        <label>Password <input type="password" id="login-password" required></label>
+        <button type="submit">Log in</button>
+      </form>
+    </section>
+
+    <p><a href="dashboard.html">Go to dashboard</a> (requires login)</p>
+  </main>
+</body>
+</html>
