@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Switch Challenge — Simple, Endless</title>
+<style>
+  html, body { margin:0; font-family: system-ui, Arial; background:#f7f7fb; color:#111; }
+  .wrap { max-width: 860px; margin: 24px auto; padding: 16px; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+  h1 { font-size: 20px; margin: 0; }
+  .score { font-weight:700; font-size:16px; }
+  .label { font-size: 12px; color:#666; letter-spacing:.08em; text-transform:uppercase; margin: 10px 0 6px; }
+  .row { display:grid; grid-template-columns: repeat(4, 60px); gap: 12px; align-items:center; justify-content:center; }
+  .tile { width:60px; height:60px; border-radius:10px; background:white; display:grid; place-items:center; border:1px solid #e5e7eb; }
+  .bar { display:flex; gap:12px; justify-content:center; margin:14px 0; flex-wrap:wrap; }
+  .opt { min-width:88px; padding:10px 12px; font-size:22px; border-radius:10px; border:2px solid #d1d5db; background:white; cursor:pointer; font-variant-numeric:tabular-nums; }
+  .opt:focus { outline:3px solid #3b82f6; outline-offset:2px; }
+  .chip { text-align:center; margin:6px 0 10px; font-weight:700; font-size:18px; }
+  .status { text-align:center; font-weight:700; margin-top:8px; }
+  .ok { color:#15803d; }
+  .bad { color:#b91c1c; }
+  .controls { display:flex; justify-content:center; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  .btn { padding:10px 14px; border-radius:10px; border:2px solid #d1d5db; background:white; cursor:pointer; font-weight:700; }
+  .btn[disabled] { opacity:.5; cursor:not-allowed; }
+  .debug { text-align:center; font-size:12px; color:#444; margin-top:6px; }
+  .plus { fill:#2EA7FF } .square{fill:#E63946} .circle{fill:#4CAF50} .tri{fill:#F4B400}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Switch Challenge — Endless</h1>
+      <div class="score">Score: <span id="score">0</span></div>
+    </header>
+
+    <div class="label">Target</div>
+    <div id="topRow" class="row"></div>
+
+    <div class="label">Options</div>
+    <div id="options" class="bar"></div>
+    <div id="chip" class="chip">Selected: —</div>
+
+    <div class="label">Input</div>
+    <div id="bottomRow" class="row"></div>
+
+    <div id="status" class="status">Locked</div>
+
+    <div class="controls">
+      <button id="nextBtn" class="btn" type="button" disabled>Next level ▶</button>
+      <button id="skipBtn" class="btn" type="button">Skip ↷</button>
+      <label style="font-size:13px"><input type="checkbox" id="showDebug"> Show expected code</label>
+    </div>
+    <div id="debug" class="debug" style="display:none"></div>
+  </div>
+
+<script>
+// Shapes as very simple SVGs
+function shapePlus(){ return `<svg width="34" height="34" viewBox="0 0 24 24" aria-label="plus"><path class="plus" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg>` }
+function shapeSquare(){ return `<svg width="34" height="34" viewBox="0 0 24 24" aria-label="square"><rect class="square" x="4" y="4" width="16" height="16" rx="3"/></svg>` }
+function shapeCircle(){ return `<svg width="34" height="34" viewBox="0 0 24 24" aria-label="circle"><circle class="circle" cx="12" cy="12" r="8"/></svg>` }
+function shapeTriangle(){ return `<svg width="34" height="34" viewBox="0 0 24 24" aria-label="triangle"><path class="tri" d="M12 4l9 16H3z"/></svg>` }
+const SHAPES = { 'P': shapePlus, 'S': shapeSquare, 'C': shapeCircle, 'T': shapeTriangle };
+
+// Rule: For each bottom item, write the 1-based index of the same token in TOP
+function deriveCode(top, bottom){
+  const pos = new Map();
+  top.forEach((t,i)=> pos.set(t, i+1));
+  return bottom.map(t => pos.get(t)).join('');
+}
+
+function renderRow(el, tokens){
+  el.innerHTML = tokens.map(t => `<div class="tile" data-token="${t}">${SHAPES[t]()}</div>`).join('');
+}
+
+// Util: shuffle
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+// Util: generate a random permutation code as string like '2413'
+function randomCode(){
+  const base = [1,2,3,4];
+  return shuffle(base).join('');
+}
+
+// Generate distractor codes: valid perms not equal to correct
+function makeOptions(correct){
+  const set = new Set([correct]);
+  while (set.size < 3){
+    const c = randomCode();
+    if (c !== correct) set.add(c);
+  }
+  // shuffle the display order
+  return shuffle(Array.from(set));
+}
+
+// Level factory: pick random bottom, random top, derive correct per your rule
+function makeLevel(){
+  const TOKENS = ['P','S','C','T'];
+  const bottom = shuffle(TOKENS);
+  const top = shuffle(TOKENS);
+  const correct = deriveCode(top, bottom);
+  const options = makeOptions(correct);
+  return { top, bottom, options, correct };
+}
+
+// State
+let score = 0;
+let lvl = null;
+
+// DOM
+const topRow = document.getElementById('topRow');
+const bottomRow = document.getElementById('bottomRow');
+const optionsEl = document.getElementById('options');
+const chip = document.getElementById('chip');
+const status = document.getElementById('status');
+const scoreEl = document.getElementById('score');
+const nextBtn = document.getElementById('nextBtn');
+const skipBtn = document.getElementById('skipBtn');
+const debug = document.getElementById('debug');
+const showDebug = document.getElementById('showDebug');
+
+showDebug.addEventListener('change', ()=>{
+  debug.style.display = showDebug.checked ? 'block' : 'none';
+});
+
+function loadNewLevel(){
+  lvl = makeLevel();
+  renderRow(topRow, lvl.top);
+  renderRow(bottomRow, lvl.bottom);
+  optionsEl.innerHTML = '';
+  lvl.options.forEach(code => {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.type = 'button'; b.textContent = code;
+    b.addEventListener('click', ()=> choose(code));
+    optionsEl.appendChild(b);
+  });
+  chip.textContent = 'Selected: —';
+  status.textContent = 'Locked';
+  status.className = 'status';
+  nextBtn.disabled = true;
+  debug.textContent = `Expected code: ${lvl.correct}`;
+}
+
+function choose(code){
+  chip.textContent = `Selected: ${code}`;
+  if (code === lvl.correct){
+    status.textContent = 'Correct — Unlocked';
+    status.className = 'status ok';
+    score += 1; scoreEl.textContent = String(score);
+    nextBtn.disabled = false;
+  } else {
+    status.textContent = 'Nope — Try again';
+    status.className = 'status bad';
+  }
+}
+
+nextBtn.addEventListener('click', loadNewLevel);
+skipBtn.addEventListener('click', loadNewLevel);
+
+// boot
+loadNewLevel();
+</script>
+</body>
+</html>
