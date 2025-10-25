@@ -23,10 +23,12 @@
     a.btn { text-decoration:none; }
   </style>
 </head>
+
 <body
   data-supabase-url="https://dtmqecmuynheejxnyrfn.supabase.co"
   data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ"
 >
+
   <h1>Supabase Auth Proof of Concept</h1>
   <p class="note">Register, verify by email, then access the protected page.</p>
 
@@ -61,7 +63,10 @@
     <button id="signOutBtn" type="button">Sign out</button>
   </div>
 
-  <p class="note">After registering, check your inbox. The link will redirect to <code>/callback.html</code> which completes sign in.</p>
+  <p class="note">
+    After registering, check your inbox. The link will redirect to
+    <code>/callback.html</code> which completes sign in.
+  </p>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -70,9 +75,12 @@
     const SUPABASE_ANON_KEY = body.dataset.supabaseAnonKey;
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Helpers
+    // Helper function
     const el = id => document.getElementById(id);
     const sessionCard = el('sessionCard');
+
+    // Full redirect URL for GitHub Pages (fixes the 404 issue)
+    const redirect = "https://alexrose1606.github.io/test-site/callback.html";
 
     async function refreshSessionCard() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -81,12 +89,11 @@
         return;
       }
       const user = session.user;
-      const email = user.email;
       const confirmedAt = user.email_confirmed_at;
       sessionCard.style.display = 'block';
       sessionCard.innerHTML = `
         <div class="row">
-          <div><b>Signed in:</b> ${email}</div>
+          <div><b>Signed in:</b> ${user.email}</div>
           <div class="right"><button onclick="signOut()">Sign out</button></div>
         </div>
         <div class="${confirmedAt ? 'ok' : 'warn'}">
@@ -110,7 +117,6 @@
       el('registerMsg').textContent = 'Sending verification email...';
       const email = el('regEmail').value.trim();
       const password = el('regPass').value;
-      const redirect = `${location.origin}/callback.html`;
       const { data, error } = await supabase.auth.signUp({
         email, password,
         options: { emailRedirectTo: redirect }
@@ -123,7 +129,7 @@
       el('registerMsg').textContent = 'Check your inbox for the confirmation link.';
     });
 
-    // Login with password
+    // Login
     el('loginBtn').addEventListener('click', async () => {
       el('loginMsg').textContent = 'Signing in...';
       const email = el('logEmail').value.trim();
@@ -138,7 +144,6 @@
       await refreshSessionCard();
     });
 
-    // Keep UI updated on auth changes
     supabase.auth.onAuthStateChange((_event, _session) => {
       refreshSessionCard();
     });
