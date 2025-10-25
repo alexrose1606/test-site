@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finishing sign in...</title>
+  <style> body { font-family: system-ui, Arial; max-width: 720px; margin: 24px auto; padding: 16px; } </style>
+</head>
+<body
+  data-supabase-url="https://dtmqecmuynheejxnyrfn.supabase.co"
+  data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ"
+>
+  <h1>Finishing sign in</h1>
+  <p id="msg">Checking the link...</p>
+  <p><a href="./app.html">Go to protected page</a></p>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const body = document.body;
+    const SUPABASE_URL = body.dataset.supabaseUrl;
+    const SUPABASE_ANON_KEY = body.dataset.supabaseAnonKey;
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    (async () => {
+      const out = await supabase.auth.exchangeCodeForSession(window.location.href);
+      if (out.error) {
+        document.getElementById('msg').textContent = out.error.message;
+      } else {
+        document.getElementById('msg').textContent = 'Signed in. You can open the protected page.';
+      }
+    })();
+  </script>
+</body>
+</html>
