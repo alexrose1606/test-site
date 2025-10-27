@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Supabase Auth POC</title>
+  <style>
+    body { font-family: system-ui, Arial; max-width: 720px; margin: 24px auto; padding: 16px; background:#f7f7fb; color:#111; }
+    h1 { margin: 0 0 12px 0; }
+    fieldset { border:1px solid #e5e7eb; border-radius:10px; margin:14px 0; padding:12px; background:white; }
+    label { display:block; margin:8px 0 4px; }
+    input[type="email"], input[type="password"] { width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px; }
+    button { padding:10px 14px; border-radius:10px; border:1px solid #d1d5db; background:white; cursor:pointer; font-weight:600; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .note { font-size:14px; color:#444; }
+    .ok { color:#15803d; font-weight:700; }
+    .warn { color:#b45309; font-weight:700; }
+    .err { color:#b91c1c; font-weight:700; }
+    .card { border:1px solid #e5e7eb; border-radius:10px; padding:12px; background:white; }
+    .muted { color:#666; }
+    .right { float:right }
+    .center { text-align:center }
+    a.btn { text-decoration:none; }
+  </style>
+</head>
+
+<body
+  data-supabase-url="https://dtmqecmuynheejxnyrfn.supabase.co"
+  data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ"
+>
+  <h1>Supabase Auth Proof of Concept</h1>
+  <p class="note">Register, verify by email, then access your member dashboard.</p>
+
+  <div id="sessionCard" class="card" style="display:none"></div>
+
+  <!-- Register -->
+  <fieldset>
+    <legend><b>Register</b></legend>
+    <label>Email</label>
+    <input id="regEmail" type="email" placeholder="you@example.com" required />
+    <label>Password</label>
+    <input id="regPass" type="password" placeholder="At least 6 characters" required />
+    <div class="row">
+      <button id="registerBtn" type="button">Create account</button>
+      <span id="registerMsg" class="muted"></span>
+    </div>
+  </fieldset>
+
+  <!-- Login -->
+  <fieldset>
+    <legend><b>Login</b></legend>
+    <label>Email</label>
+    <input id="logEmail" type="email" placeholder="you@example.com" required />
+    <label>Password</label>
+    <input id="logPass" type="password" placeholder="Your password" required />
+    <div class="row">
+      <button id="loginBtn" type="button">Login</button>
+      <span id="loginMsg" class="muted"></span>
+    </div>
+    <p class="note">
+      <a href="#" id="forgotLink">Forgot your password?</a>
+      <span id="forgotMsg" class="muted"></span>
+    </p>
+  </fieldset>
+
+  <div class="row">
+    <a class="btn" href="./member_dashboard.html"><button type="button">Go to dashboard</button></a>
+    <button id="signOutBtn" type="button">Sign out</button>
+  </div>
+
+  <p class="note">
+    After registering, check your inbox. The link will redirect to
+    <code>/callback.html</code> which completes sign in.
+  </p>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = document.body.dataset.supabaseUrl;
+    const SUPABASE_ANON_KEY = document.body.dataset.supabaseAnonKey;
+
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
+      { auth: { flowType: 'pkce' } }
+    );
+
+    const el = id => document.getElementById(id);
+    const sessionCard = el('sessionCard');
+
+    // Fully-qualified GitHub Pages paths
+    const callbackUrl = "https://alexrose1606.github.io/test-site/callback.html";
+    const resetUrl    = "https://alexrose1606.github.io/test-site/reset.html";
+
+    async function refreshSessionCard() {
+      const { data: { session} } = await supabase.auth.getSession();
+      if (!session) { sessionCard.style.display = 'none'; return; }
+      const user = session.user;
+      sessionCard.style.display = 'block';
+      sessionCard.innerHTML = `
+        <div class="row">
+          <div><b>Signed in:</b> ${user.email}</div>
+          <div class="right"><button onclick="signOut()">Sign out</button></div>
+        </div>
+        <div class="${user.email_confirmed_at ? 'ok' : 'warn'}">
+          ${user.email_confirmed_at ? 'Email is verified' : 'Email not verified yet, open the link we sent you'}
+        </div>
+        <div class="note">User ID: ${user.id}</div>
+      `;
+    }
+
+    async function signOut() {
+      await supabase.auth.signOut();
+      await refreshSessionCard();
+      el('loginMsg').textContent = '';
+      el('registerMsg').textContent = '';
+    }
+    el('signOutBtn').addEventListener('click', signOut);
+
+    // Register
+    el('registerBtn').addEventListener('click', async () => {
+      el('registerMsg').textContent = 'Sending verification email...';
+      const email = el('regEmail').value.trim();
+      const password = el('regPass').value;
+      const { error } = await supabase.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: callbackUrl }
+      });
+      if (error) { el('registerMsg').textContent = ''; alert(error.message); return; }
+      el('registerMsg').textContent = 'Check your inbox for the confirmation link.';
+    });
+
+    // Login
+    el('loginBtn').addEventListener('click', async () => {
+      el('loginMsg').textContent = 'Signing in...';
+      const email = el('logEmail').value.trim();
+      const password = el('logPass').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { el('loginMsg').textContent = ''; alert(error.message); return; }
+      el('loginMsg').textContent = 'Signed in. You can open the dashboard.';
+      await refreshSessionCard();
+    });
+
+    // Forgot password
+    document.getElementById('forgotLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('logEmail').value.trim();
+      if (!email) {
+        document.getElementById('forgotMsg').textContent = 'Enter your email above first.';
+        return;
+      }
+      localStorage.setItem('pwreset_email', email);
+      document.getElementById('forgotMsg').textContent = 'Sending reset email...';
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: resetUrl });
+      document.getElementById('forgotMsg').textContent = error ? error.message : 'Check your inbox for the reset link.';
+    });
+
+    supabase.auth.onAuthStateChange((_event, _session) => { refreshSessionCard(); });
+    refreshSessionCard();
+  </script>
+</body>
+</html>

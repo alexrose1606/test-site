@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Switch Challenge — Timed</title>
+  <style>
+    /* Frame and gate */
+    body { font-family: system-ui, Arial; max-width: 960px; margin: 24px auto; padding: 16px; background:#f7f7fb; color:#111; }
+    .card { border:1px solid #e5e7eb; border-radius:12px; padding:14px; background:white; }
+    .err { color:#b91c1c; font-weight:700; }
+    .warn { color:#b45309; font-weight:700; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+    .muted { color:#666; }
+
+    /* Game UI */
+    .wrap { max-width: 860px; margin: 24px auto; padding: 16px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    h1 { font-size: 20px; margin: 0; }
+    .meta { display:flex; gap:16px; align-items:center; font-weight:700; }
+    .label { font-size: 12px; color:#666; letter-spacing:.08em; text-transform:uppercase; margin: 10px 0 6px; }
+    .row-grid { display:grid; grid-template-columns: repeat(4, 60px); gap: 12px; align-items:center; justify-content:center; }
+    .tile { width:60px; height:60px; border-radius:10px; background:white; display:grid; place-items:center; border:1px solid #e5e7eb; }
+    .bar { display:flex; gap:12px; justify-content:center; margin:14px 0; flex-wrap:wrap; }
+    .opt { min-width:88px; padding:10px 12px; font-size:22px; border-radius:10px; border:2px solid #d1d5db; background:white; cursor:pointer; font-variant-numeric:tabular-nums; }
+    .opt:disabled { opacity:.5; cursor:not-allowed; }
+    .opt:focus { outline:3px solid #3b82f6; outline-offset:2px; }
+    .chip { text-align:center; margin:6px 0 10px; font-weight:700; font-size:18px; }
+    .status { text-align:center; font-weight:700; margin-top:8px; }
+    .ok { color:#15803d; }
+    .bad { color:#b91c1c; }
+    .controls { display:flex; justify-content:center; gap:10px; margin-top:10px; flex-wrap:wrap; }
+    .btn { padding:10px 14px; border-radius:10px; border:2px solid #d1d5db; background:white; cursor:pointer; font-weight:700; }
+    .btn[disabled] { opacity:.5; cursor:not-allowed; }
+    .debug { text-align:center; font-size:12px; color:#444; margin-top:6px; }
+    .plus { fill:#2EA7FF } .square{fill:#E63946} .circle{fill:#4CAF50} .tri{fill:#F4B400}
+
+    /* Leaderboard table */
+    table { width:100%; border-collapse: collapse; }
+    th, td { text-align:left; padding:6px 8px; border-bottom:1px solid #eee; }
+  </style>
+</head>
+
+<body
+  data-supabase-url="https://dtmqecmuynheejxnyrfn.supabase.co"
+  data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ"
+>
+  <h1>Switch Challenge</h1>
+
+  <div class="row">
+    <a href="./member_dashboard.html">Back to dashboard</a>
+    <span class="muted">|</span>
+    <button id="signOutBtn" type="button">Sign out</button>
+  </div>
+
+  <div id="gate" class="card">Loading…</div>
+
+  <!-- Revealed after member gate passes -->
+  <div id="content" style="display:none">
+    <div class="wrap">
+      <header>
+        <h1>Switch Challenge, Timed</h1>
+        <div class="meta">
+          <div>Level: <span id="level">1</span></div>
+          <div>Time: <span id="timer">60</span>s</div>
+        </div>
+      </header>
+
+      <div class="label">Target</div>
+      <div id="topRow" class="row-grid"></div>
+
+      <div class="label">Options</div>
+      <div id="options" class="bar"></div>
+      <div id="chip" class="chip">Selected: —</div>
+
+      <div class="label">Input</div>
+      <div id="bottomRow" class="row-grid"></div>
+
+      <div id="status" class="status">Locked</div>
+
+      <div class="controls">
+        <button id="skipBtn" class="btn" type="button">Skip ↷</button>
+        <label style="font-size:13px"><input type="checkbox" id="showDebug"> Show expected code</label>
+        <button id="resetBtn" class="btn" type="button" style="display:none">Reset and try again</button>
+      </div>
+      <div id="debug" class="debug" style="display:none"></div>
+
+      <!-- Leaderboard -->
+      <div id="leaderboard" class="card" style="margin-top:14px; display:none"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ========= Supabase member gate =========
+    const SUPABASE_URL = document.body.dataset.supabaseUrl;
+    const SUPABASE_ANON_KEY = document.body.dataset.supabaseAnonKey;
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce' } });
+
+    const gate = document.getElementById('gate');
+    const content = document.getElementById('content');
+
+    async function ensureMember() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        gate.className = 'card err';
+        gate.innerHTML = 'No session. Please <a href="./index.html">log in</a>.';
+        return false;
+      }
+      const user = session.user;
+      if (!user.email_confirmed_at) {
+        gate.className = 'card warn';
+        gate.innerHTML = 'Signed in but email not verified. Open the link we sent you, then refresh this page.';
+        return false;
+      }
+      return true;
+    }
+
+    document.getElementById('signOutBtn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      window.location.href = './index.html';
+    });
+
+    // ========= Game + scoring =========
+    function initSwitchChallenge() {
+      // Shapes
+      function shapePlus(){ return `<svg width="34" height="34" viewBox="0 0 24 24"><path class="plus" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg>` }
+      function shapeSquare(){ return `<svg width="34" height="34" viewBox="0 0 24 24"><rect class="square" x="4" y="4" width="16" height="16" rx="3"/></svg>` }
+      function shapeCircle(){ return `<svg width="34" height="34" viewBox="0 0 24 24"><circle class="circle" cx="12" cy="12" r="8"/></svg>` }
+      function shapeTriangle(){ return `<svg width="34" height="34" viewBox="0 0 24 24"><path class="tri" d="M12 4l9 16H3z"/></svg>` }
+      const SHAPES = { 'P': shapePlus, 'S': shapeSquare, 'C': shapeCircle, 'T': shapeTriangle };
+
+      // Rule logic
+      function deriveCode(top, bottom){
+        const pos = new Map();
+        top.forEach((t,i)=> pos.set(t, i+1));
+        return bottom.map(t => pos.get(t)).join('');
+      }
+      function renderRow(el, tokens){
+        el.innerHTML = tokens.map(t => `<div class="tile">${SHAPES[t]()}</div>`).join('');
+      }
+      function shuffle(arr){ const a = arr.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+      function randomCode(){ return shuffle([1,2,3,4]).join(''); }
+      function makeOptions(correct){ const set=new Set([correct]); while(set.size<3){ const c=randomCode(); if(c!==correct) set.add(c);} return shuffle([...set]); }
+      function makeLevel(){ const TOKENS=['P','S','C','T']; const bottom=shuffle(TOKENS); const top=shuffle(TOKENS); const correct=deriveCode(top,bottom); const options=makeOptions(correct); return { top,bottom,options,correct }; }
+
+      // State and DOM
+      let level=1, lvl=null, timeLeft=60, timerId=null, playing=true;
+      let correctCount = 0, totalAttempts = 0;
+      const GAME_SECONDS = 60;
+
+      const topRow=document.getElementById('topRow');
+      const bottomRow=document.getElementById('bottomRow');
+      const optionsEl=document.getElementById('options');
+      const chip=document.getElementById('chip');
+      const status=document.getElementById('status');
+      const levelEl=document.getElementById('level');
+      const timerEl=document.getElementById('timer');
+      const skipBtn=document.getElementById('skipBtn');
+      const resetBtn=document.getElementById('resetBtn');
+      const debug=document.getElementById('debug');
+      const showDebug=document.getElementById('showDebug');
+
+      showDebug.addEventListener('change', ()=>{ debug.style.display = showDebug.checked ? 'block' : 'none'; });
+
+      function setOptionsEnabled(enabled){
+        [...optionsEl.children].forEach(b=> b.disabled=!enabled);
+        skipBtn.disabled=!enabled;
+      }
+
+      function startTimer(){
+        clearInterval(timerId);
+        timeLeft = GAME_SECONDS;
+        timerEl.textContent = timeLeft;
+        playing = true;
+        resetBtn.style.display='none';
+        timerId=setInterval(()=>{
+          timeLeft--; timerEl.textContent=timeLeft;
+          if(timeLeft<=0){ timeUp(); }
+        },1000);
+      }
+
+      async function saveScoreToSupabase({ score, correct, attempts, secondsPlayed }) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return { ok:false, error:'no session' };
+          const user_id = session.user.id;
+
+          const { error } = await supabase
+            .from('switch_scores')
+            .insert([{ user_id, score, correct_count: correct, total_attempts: attempts, seconds_played: secondsPlayed }]);
+
+          if (error) return { ok:false, error: error.message };
+          return { ok:true };
+        } catch (e) {
+          return { ok:false, error: String(e) };
+        }
+      }
+
+      async function fetchAndShowPercentile(myScore){
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return;
+
+          // total rows
+          const { count: totalCount, error: e1 } = await supabase
+            .from('switch_scores')
+            .select('*', { count: 'exact', head: true });
+          if (e1 || !totalCount || totalCount < 5) return; // avoid noisy small samples
+
+          // count scores <= mine
+          const { count: atOrBelow, error: e2 } = await supabase
+            .from('switch_scores')
+            .select('*', { count: 'exact', head: true })
+            .lte('score', myScore);
+          if (e2 || atOrBelow == null) return;
+
+          const percentile = (atOrBelow / totalCount) * 100; // 0 low, 100 high
+          const topPct = Math.max(0, 100 - percentile);
+          const topRounded = Math.round(topPct);
+
+          status.textContent += `  You are in the top ${topRounded}% of players.`;
+        } catch (e) { /* silent */ }
+      }
+
+      async function renderLeaderboard(limit = 10){
+        const box = document.getElementById('leaderboard');
+        const { data, error } = await supabase
+          .from('switch_scores')
+          .select('score, correct_count, total_attempts, created_at, user_id')
+          .order('score', { ascending: false })
+          .limit(limit);
+
+        if (error || !data) { box.style.display = 'none'; return; }
+
+        const rows = data.map((r, i) => {
+          const uid = String(r.user_id).slice(0, 8);
+          const when = new Date(r.created_at).toLocaleString();
+          return `<tr>
+            <td>${i + 1}</td>
+            <td>${r.score}</td>
+            <td>${r.correct_count}/${r.total_attempts}</td>
+            <td>${uid}</td>
+            <td>${when}</td>
+          </tr>`;
+        }).join('');
+
+        box.innerHTML = `
+          <h3 style="margin:0 0 8px 0">Leaderboard</h3>
+          <div class="muted" style="margin-bottom:8px">Top ${limit} runs</div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Score</th>
+                  <th>Correct</th>
+                  <th>Player</th>
+                  <th>When</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+        box.style.display = 'block';
+      }
+
+      function timeUp(){
+        clearInterval(timerId);
+        playing = false;
+        setOptionsEnabled(false);
+
+        // scoring rule: equal to number of correct answers
+        const score = correctCount;
+        const secondsPlayed = GAME_SECONDS;
+
+        saveScoreToSupabase({
+          score, correct: correctCount, attempts: totalAttempts, secondsPlayed
+        }).then(result => {
+          if (result.ok) {
+            status.textContent = `Time up. You scored ${score}. Saved. Press Reset to try again.`;
+            renderLeaderboard();
+            fetchAndShowPercentile(score);
+          } else {
+            status.textContent = `Time up. You scored ${score}. Could not save: ${result.error}`;
+          }
+          status.className='status';
+          resetBtn.style.display='inline-block';
+        });
+      }
+
+      function resetAll(){
+        level=1;
+        correctCount=0;
+        totalAttempts=0;
+        levelEl.textContent=level;
+        loadNewLevel();
+        startTimer();
+      }
+      resetBtn.addEventListener('click', resetAll);
+
+      function loadNewLevel(){
+        lvl = makeLevel();
+        renderRow(topRow, lvl.top);
+        renderRow(bottomRow, lvl.bottom);
+        optionsEl.innerHTML='';
+        lvl.options.forEach(code=>{
+          const b=document.createElement('button');
+          b.className='opt'; b.type='button'; b.textContent=code;
+          b.addEventListener('click', ()=> choose(code));
+          optionsEl.appendChild(b);
+        });
+        chip.textContent='Selected: —';
+        status.textContent='Locked';
+        status.className='status';
+        debug.textContent=`Expected code: ${lvl.correct}`;
+        setOptionsEnabled(true);
+      }
+
+      function choose(code){
+        if(!playing) return;
+        setOptionsEnabled(false);
+        chip.textContent=`Selected: ${code}`;
+        totalAttempts += 1;
+
+        if(code===lvl.correct){
+          correctCount += 1;
+          status.textContent='Correct';
+          status.className='status ok';
+          level += 1;
+          levelEl.textContent=String(level);
+          loadNewLevel();
+        } else {
+          status.textContent='Wrong';
+          status.className='status bad';
+          level = Math.max(1, level-1);
+          levelEl.textContent=String(level);
+          loadNewLevel();
+        }
+        setOptionsEnabled(true);
+      }
+
+      skipBtn.addEventListener('click', ()=>{ if(playing) loadNewLevel(); });
+
+      // start
+      loadNewLevel();
+      startTimer();
+
+      // show leaderboard on first load
+      renderLeaderboard();
+    }
+
+    // Start after member gate
+    (async function main(){
+      const ok = await ensureMember();
+      if (!ok) return;
+      gate.style.display = 'none';
+      content.style.display = 'block';
+      initSwitchChallenge();
+    })();
+  </script>
+</body>
+</html>
