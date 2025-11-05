@@ -1,0 +1,348 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crandale — Home</title>
+  <style>
+    :root { --blue:#2563eb; --blue-dark:#1e40af; --ink:#111; --muted:#666; --line:#e5e7eb; --card:#fff; --page:#f7f7fb; --radius:12px; }
+    html,body{margin:0}
+    body{font-family:system-ui,Arial;background:var(--page);color:var(--ink)}
+    .container{max-width:960px;margin:0 auto;padding:16px}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:700;text-decoration:none;color:var(--ink)}
+    .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)} .btn.primary:hover{background:var(--blue-dark);border-color:var(--blue-dark)}
+    a.btn-link{color:var(--blue);text-decoration:none;font-weight:700} a.btn-link:hover{text-decoration:underline}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .card{border:1px solid var(--line);border-radius:var(--radius);padding:12px;background:var(--card)}
+    .muted{color:var(--muted)} .ok{color:#15803d;font-weight:700} .warn{color:#b45309;font-weight:700} .err{color:#b91c1c;font-weight:700}
+    .site-header{background:var(--card);border-bottom:1px solid var(--line)}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;color:var(--blue);text-decoration:none}
+    .brand-badge{width:12px;height:12px;background:var(--blue);border-radius:50%}
+    .hero{padding:32px 16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .hero-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+    h1.title{margin:0 0 8px 0;font-size:28px}
+    .subtitle{margin:0 0 14px 0;color:var(--muted)}
+    fieldset{border:1px solid var(--line);border-radius:var(--radius);margin:14px 0;padding:12px;background:var(--card)}
+    legend{font-weight:700} label{display:block;margin:8px 0 4px}
+    input[type="text"],input[type="email"],input[type="password"]{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+    table{width:100%;border-collapse:collapse} th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #eee}
+    .site-footer{margin-top:32px;background:var(--card);border-top:1px solid var(--line)}
+    .footer-grid{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .footer-links{display:flex;gap:14px;flex-wrap:wrap} .footer-links a{color:var(--blue);text-decoration:none} .footer-links a:hover{text-decoration:underline}
+    .hi{color:var(--muted);font-weight:600}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+
+<body
+  data-supabase-url="https://dtmqecmuynheejxnyrfn.supabase.co"
+  data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ"
+>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container">
+      <div class="nav">
+        <a class="brand" href="./index.html"><span class="brand-badge"></span>Crandale</a>
+        <div class="row">
+          <span id="hiUser" class="hi"></span>
+          <a class="btn-link" href="./member_dashboard.html">Dashboard</a>
+          <a class="btn primary" href="./demo.html">Play free demo</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+
+  <section class="hero">
+    <div class="container grid">
+      <!-- LEFT COLUMN -->
+      <div class="hero-card">
+        <!-- Register -->
+        <fieldset>
+          <legend><b>Register</b></legend>
+          <label>Username (public on leaderboards)</label>
+          <input id="regName" type="text" placeholder="e.g., AlexR" required />
+          <label>Email</label>
+          <input id="regEmail" type="email" placeholder="you@example.com" required />
+          <label>Password</label>
+          <input id="regPass" type="password" placeholder="At least 6 characters" required />
+          <div class="row">
+            <button id="registerBtn" class="btn primary" type="button">Create account</button>
+            <span id="registerMsg" class="muted"></span>
+          </div>
+          <div class="row">
+            <button class="btn" type="button" onclick="resendVerification()">Didn’t get the email? Resend</button>
+          </div>
+        </fieldset>
+
+```
+    <!-- Login -->
+    <fieldset>
+      <legend><b>Login</b></legend>
+      <label>Email</label>
+      <input id="logEmail" type="email" placeholder="you@example.com" required />
+      <label>Password</label>
+      <input id="logPass" type="password" placeholder="Your password" required />
+      <div class="row">
+        <button id="loginBtn" class="btn" type="button">Login</button>
+        <span id="loginMsg" class="muted"></span>
+      </div>
+      <p class="muted">
+        <a href="#" id="forgotLink">Forgot your password?</a>
+        <span id="forgotMsg" class="muted"></span>
+      </p>
+    </fieldset>
+
+    <div class="row">
+      <a class="btn" href="./member_dashboard.html">Go to dashboard</a>
+      <button id="signOutBtn" class="btn" type="button">Sign out</button>
+    </div>
+
+    <div id="sessionCard" class="card" style="display:none; margin-top:10px"></div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="hero-card">
+    <h1 class="title">Graduate test practice that feels like a game</h1>
+    <p class="subtitle">Pick a username, play the Switch Challenge, and see your name on the leaderboard.</p>
+
+    <div id="homeLeaderboard" class="card" style="margin-top:14px">
+      <h3 style="margin:0 0 8px 0">Top 5, last 24 hours</h3>
+      <div id="homeLbBox">Loading…</div>
+    </div>
+  </div>
+</div>
+```
+
+  </section>
+
+  <!-- Footer -->
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="muted">© <span id="year"></span> Crandale</div>
+      <nav class="footer-links">
+        <a href="./about.html">About</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./terms.html">Terms of Service</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Supabase -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const supabase = window.supabase.createClient(
+      document.body.dataset.supabaseUrl,
+      document.body.dataset.supabaseAnonKey,
+      { auth:{ flowType: 'pkce' } }
+    );
+
+    const el = id => document.getElementById(id);
+    const sessionCard = el('sessionCard');
+    const hiEl = el('hiUser');
+
+    const here = new URL(window.location.href);
+    const base = new URL('.', here).href;
+    const callbackUrl = new URL('callback.html', base).href;
+    const resetUrl    = new URL('reset.html', base).href;
+
+    async function updateHiUser() {
+      if (!hiEl) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { hiEl.textContent = ''; return; }
+      const uid = session.user.id;
+
+      let name = null;
+      try {
+        const { data: prof } = await supabase.from('profiles').select('username').eq('id', uid).maybeSingle();
+        if (prof && prof.username) name = prof.username;
+      } catch {}
+      if (!name) name = (session.user.email || '').split('@')[0];
+
+      hiEl.textContent = name ? `Hi, ${name}` : '';
+    }
+
+    async function refreshSessionCard() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { sessionCard.style.display = 'none'; await updateHiUser(); return; }
+      const user = session.user;
+      const notVerified = !user.email_confirmed_at;
+
+      sessionCard.style.display = 'block';
+      sessionCard.innerHTML = `
+        <div class="row" style="justify-content:space-between">
+          <div><b>Signed in:</b> ${user.email}</div>
+          <div><button class="btn" onclick="signOut()">Sign out</button></div>
+        </div>
+        ${notVerified ? `
+          <div class="warn">
+            Email not verified yet.
+            <button class="btn" onclick="resendVerification('${user.email}')">Resend verification</button>
+          </div>
+        ` : ``}
+      `;
+      await updateHiUser();
+    }
+
+    async function signOut(){ await supabase.auth.signOut(); await refreshSessionCard(); el('loginMsg').textContent=''; el('registerMsg').textContent='' }
+    el('signOutBtn').addEventListener('click', signOut);
+
+    // Register — now passes username to auth metadata and upserts profile immediately
+    el('registerBtn').addEventListener('click', async () => {
+      const username = el('regName').value.trim();
+      const email = el('regEmail').value.trim();
+      const password = el('regPass').value;
+
+      if (!username || username.length < 3) { alert('Please choose a username with at least 3 characters.'); return; }
+      if (!/^[a-zA-Z0-9_.-]+$/.test(username)) { alert('Usernames can only use letters, numbers, dot, underscore, and dash.'); return; }
+
+      localStorage.setItem('desired_username', username);
+      el('registerMsg').textContent = 'Sending verification email...';
+
+      const { data, error } = await supabase.auth.signUp({
+        email, password,
+        options: {
+          emailRedirectTo: callbackUrl,
+          data: { username }      // store chosen username in user metadata
+        }
+      });
+
+      if (error) { el('registerMsg').textContent = ''; alert(error.message); return; }
+
+      // Create or update profile row now so leaderboards have the right name immediately
+      if (data?.user?.id) {
+        await supabase.from('profiles').upsert(
+          { id: data.user.id, email, username },
+          { onConflict: 'id' }
+        );
+      }
+
+      el('registerMsg').textContent = 'Check your inbox for the confirmation link.';
+    });
+
+    // Login
+    el('loginBtn').addEventListener('click', async () => {
+      el('loginMsg').textContent = 'Signing in...';
+      const email = el('logEmail').value.trim();
+      const password = el('logPass').value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { el('loginMsg').textContent = ''; alert(error.message); return; }
+
+      // ensure profile exists and has a username on password login as well
+      const { data:{ user } } = await supabase.auth.getUser();
+      if (user) {
+        const uid = user.id;
+        const fromLocal = localStorage.getItem('desired_username');
+        const metaName  = user.user_metadata?.username;
+        const fallback  = (user.email || 'Player').split('@')[0];
+        const username  = (fromLocal && fromLocal.length >= 3) ? fromLocal
+                         : (metaName && metaName.length >= 3) ? metaName
+                         : fallback;
+
+        await supabase.from('profiles').upsert({ id: uid, email: user.email, username }, { onConflict:'id' });
+      }
+
+      el('loginMsg').textContent = 'Signed in. You can open the dashboard.';
+      await refreshSessionCard();
+    });
+
+    // Forgot password
+    el('forgotLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = el('logEmail').value.trim();
+      if (!email) { el('forgotMsg').textContent = 'Enter your email above first.'; return; }
+      localStorage.setItem('pwreset_email', email);
+      el('forgotMsg').textContent = 'Sending reset email...';
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: resetUrl });
+      el('forgotMsg').textContent = error ? error.message : 'Check your inbox for the reset link.';
+    });
+
+    // Resend verification
+    async function resendVerification(explicitEmail) {
+      try {
+        const email = explicitEmail || el('regEmail')?.value?.trim() || el('logEmail')?.value?.trim();
+        if (!email) { alert('Type your email in the Register or Login box first.'); return; }
+
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email,
+          options: { emailRedirectTo: callbackUrl }
+        });
+        if (error) alert(error.message);
+        else alert('Verification email sent. Check your inbox.');
+      } catch (e) { alert(String(e)); }
+    }
+
+    supabase.auth.onAuthStateChange((_event,_session)=>{ refreshSessionCard(); updateHiUser(); });
+    refreshSessionCard();
+    updateHiUser();
+
+    // ---- Homepage Leaderboard (Top 5, last 24h), names from profiles ----
+    function reduceByUser(rows){
+      const map = new Map();
+      for(const r of rows || []){
+        const id = r.user_id;
+        const m = map.get(id) || { user_id:id, best:0, runs:0, lastAt:0 };
+        m.best  = Math.max(m.best, r.levels_reached || 0);
+        m.runs += 1;
+        const ts = new Date(r.ended_at).getTime();
+        if (ts > m.lastAt) m.lastAt = ts;
+        map.set(id, m);
+      }
+      return [...map.values()]
+        .sort((a,b)=> b.best - a.best || b.runs - a.runs || b.lastAt - a.lastAt)
+        .slice(0,5);
+    }
+
+    async function loadHomeLeaderboard(){
+      const box = document.getElementById('homeLbBox');
+      const startISO = new Date(Date.now() - 24*60*60*1000).toISOString();
+
+      const { data, error } = await supabase
+        .from('plays')
+        .select('user_id, levels_reached, ended_at')
+        .gte('ended_at', startISO);
+
+      if (error) { box.textContent = 'Could not load leaderboard.'; return; }
+
+      const rows = reduceByUser(data);
+      if (rows.length === 0){ box.textContent = 'No runs in the last 24 hours.'; return; }
+
+      const ids = rows.map(r => r.user_id);
+      const { data: profs } = await supabase.from('profiles').select('id, username').in('id', ids);
+      const nameById = new Map((profs||[]).map(p => [p.id, p.username]));
+
+      const html = rows.map((r,i)=>{
+        const name = nameById.get(r.user_id) || 'Player';
+        const when = r.lastAt ? new Date(r.lastAt).toLocaleString() : '';
+        return `<tr>
+          <td>${i+1}</td>
+          <td>${name}</td>
+          <td>${r.best}</td>
+          <td>${r.runs}</td>
+          <td>${when}</td>
+        </tr>`;
+      }).join('');
+
+      box.innerHTML = `
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>#</th><th>Player</th><th>Best level</th><th>Runs</th><th>Last run</th></tr></thead>
+            <tbody>${html}</tbody>
+          </table>
+        </div>`;
+    }
+    loadHomeLeaderboard();
+  </script>
+
+</body>
+</html>

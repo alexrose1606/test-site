@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crandale Education — Switch Challenge</title>
+  <style>
+    :root{
+      --ink:#0f172a; --muted:#64748b; --line:#e5e7eb; --page:#f7f7fb; --card:#ffffff;
+      --blue:#2563eb; --blue-900:#1e40af;
+      --green:#16a34a; --amber:#f59e0b; --rose:#e11d48; --purple:#7c3aed;
+      --radius:14px;
+    }
+    html,body{margin:0}
+    body{font-family:system-ui,Arial;background:var(--page);color:var(--ink)}
+    a{color:inherit}
+    .container{max-width:1080px;margin:0 auto;padding:16px}
+
+    .nav{display:flex;align-items:center;justify-content:space-between;margin:8px 0 14px}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .brand-badge{
+      width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; font-weight:900;
+      box-shadow:0 6px 18px rgba(37,99,235,.25);
+    }
+    .brand-text{font-weight:900;letter-spacing:.2px}
+    .nav-links{display:flex;gap:10px}
+    .link{font-weight:700;text-decoration:none;border:1px solid var(--line);padding:8px 12px;border-radius:12px;background:var(--card)}
+    .link:hover{background:#fafafa}
+
+    .hero{
+      position:relative; overflow:hidden; border-radius:18px; padding:22px; margin-bottom:16px;
+      background:radial-gradient(1200px 500px at 10% -10%, rgba(124,58,237,.2), transparent),
+                 radial-gradient(900px 400px at 100% 0, rgba(37,99,235,.18), transparent),
+                 var(--card);
+      border:1px solid var(--line);
+    }
+    .hero h1{margin:4px 0 6px;font-size:32px}
+    .hero p{margin:0;color:var(--muted)}
+    .hero-cta{
+      margin-top:14px; display:inline-flex; align-items:center; gap:10px;
+      padding:12px 16px; border-radius:12px; font-weight:900; text-decoration:none;
+      background:linear-gradient(135deg,var(--blue),var(--blue-900)); color:#fff;
+      box-shadow:0 10px 24px rgba(37,99,235,.35);
+    }
+    .pill{display:inline-flex;align-items:center;gap:8px;background:#eef2ff;border:1px solid #e0e7ff;border-radius:999px;padding:6px 10px;font-weight:700;color:#3730a3}
+    .tiny{font-size:12px;color:var(--muted)}
+
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .tile{width:46px;height:46px;border-radius:10px;background:#fff;display:grid;place-items:center;border:1px solid var(--line)}
+    .plus{fill:#2EA7FF}.square{fill:#E63946}.circle{fill:#22c55e}.tri{fill:#F4B400}
+
+    .section-title{font-size:18px;margin:18px 0 8px}
+    .grid{display:grid;gap:14px}
+    @media (min-width:860px){ .grid{grid-template-columns:repeat(3,1fr)} }
+
+    .card{
+      border:1px solid var(--line); background:var(--card); border-radius:var(--radius);
+      padding:14px; display:flex; flex-direction:column; gap:10px
+    }
+    .title{font-weight:900;display:flex;align-items:center;gap:8px}
+    .badge{font-size:12px;color:#fff;background:var(--blue);border-radius:999px;padding:2px 8px}
+    .desc{color:var(--muted);font-size:14px;line-height:1.4}
+    .cta{
+      margin-top:auto; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:10px 12px; border-radius:12px; font-weight:800; text-decoration:none;
+      border:2px solid var(--line); background:#fff; color:var(--ink)
+    }
+    .cta:hover{background:#fafafa}
+
+    .footer{margin:28px 0 10px;text-align:center;color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="nav">
+      <a class="brand" href="./member_dashboard.html">
+        <div class="brand-badge">CE</div>
+        <div class="brand-text">Crandale Education</div>
+      </a>
+      <div class="nav-links">
+        <a class="link" href="./Personal_Stats.html">Personal stats</a>
+        <a class="link" href="./SC_How_To.html">How to play</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="pill">The Switch Challenge <span class="tiny">Six minute ranked mode</span></div>
+      <h1>Go for your personal best</h1>
+      <p>Six minutes, mixed stages, one continuous run. Scores update your stats and feed the leaderboard.</p>
+
+      <div class="row" style="margin-top:12px">
+        <div class="tile"><svg width="30" height="30" viewBox="0 0 24 24"><path class="tri" d="M12 4l9 16H3z"/></svg></div>
+        <div class="tile"><svg width="30" height="30" viewBox="0 0 24 24"><circle class="circle" cx="12" cy="12" r="8"/></svg></div>
+        <div class="tile"><svg width="30" height="30" viewBox="0 0 24 24"><rect class="square" x="4" y="4" width="16" height="16" rx="3"/></svg></div>
+        <div class="tile"><svg width="30" height="30" viewBox="0 0 24 24"><path class="plus" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></div>
+      </div>
+
+      <a class="hero-cta" href="./SC_Full_6m.html">Start The Switch Challenge</a>
+    </section>
+
+    <!-- Practice Stages -->
+    <h2 class="section-title">Practice stages</h2>
+    <div class="grid">
+      <!-- Stage 1 -->
+      <div class="card">
+        <div class="title">Stage 1 <span class="badge">Learn</span></div>
+        <div class="row">
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><rect class="square" x="4" y="4" width="16" height="16" rx="3"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><circle class="circle" cx="12" cy="12" r="8"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><path class="plus" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><path class="tri" d="M12 4l9 16H3z"/></svg></div>
+        </div>
+        <div class="desc">No boxes. Learn the mapping from top positions to bottom positions.</div>
+        <a class="cta" href="./SC_BX_1.html">Play Stage 1</a>
+      </div>
+
+      <!-- Stage 2 (now 4 tiles) -->
+      <div class="card">
+        <div class="title">Stage 2</div>
+        <div class="row">
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><rect class="square" x="4" y="4" width="16" height="16" rx="3"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><circle class="circle" cx="12" cy="12" r="8"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><path class="plus" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><path class="tri" d="M12 4l9 16H3z"/></svg></div>
+        </div>
+        <div class="desc">One box applies a hidden shuffle before or after your code. Read the order from top to bottom.</div>
+        <a class="cta" href="./SC_BX_2.html">Play Stage 2</a>
+      </div>
+
+      <!-- Stage 3 (now 4 tiles) -->
+      <div class="card">
+        <div class="title">Stage 3</div>
+        <div class="row">
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><rect class="square" x="4" y="4" width="16" height="16" rx="3"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><circle class="circle" cx="12" cy="12" r="8"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><path class="plus" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg></div>
+          <div class="tile"><svg width="26" height="26" viewBox="0 0 24 24"><path class="tri" d="M12 4l9 16H3z"/></svg></div>
+        </div>
+        <div class="desc">Two boxes may appear. Effects apply in order as shown on screen.</div>
+        <a class="cta" href="./SC_BX_3.html">Play Stage 3</a>
+      </div>
+    </div>
+
+    <!-- Support section -->
+    <h2 class="section-title">Helpful links</h2>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr)">
+      <div class="card">
+        <div class="title">How to play</div>
+        <div class="desc">Short guide and a tiny example to learn the logic quickly.</div>
+        <a class="cta" href="./SC_How_To.html">Open guide</a>
+      </div>
+      <div class="card">
+        <div class="title">Your stats</div>
+        <div class="desc">Personal bests and progress. Only THE Switch Challenge counts toward these.</div>
+        <a class="cta" href="./Personal_Stats.html">View stats</a>
+      </div>
+    </div>
+
+    <p class="footer">© Crandale Education</p>
+  </div>
+</body>
+</html>

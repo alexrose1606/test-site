@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Switch Challenge — Demo</title>
+  <style>
+    body{font-family:system-ui,Arial;max-width:960px;margin:24px auto;padding:16px;background:#f7f7fb;color:#111}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#fff}
+    .muted{color:#666}
+    .wrap{max-width:860px;margin:24px auto;padding:16px}
+    .nav{display:flex;align-items:center;margin-bottom:10px}
+    .brand{font-weight:800;font-size:18px;text-decoration:none;color:#111;letter-spacing:.2px}
+    .brand:hover{text-decoration:underline}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+    h1{font-size:20px;margin:0}
+    .label{font-size:12px;color:#666;letter-spacing:.08em;text-transform:uppercase;margin:10px 0 6px}
+    .row-grid{display:grid;grid-template-columns:repeat(4,60px);gap:12px;align-items:center;justify-content:center}
+    .tile{width:60px;height:60px;border-radius:10px;background:#fff;display:grid;place-items:center;border:1px solid #e5e7eb}
+    .bar{display:flex;gap:12px;justify-content:center;margin:14px 0;flex-wrap:wrap}
+    .opt{min-width:88px;padding:10px 12px;font-size:22px;border-radius:10px;border:2px solid #d1d5db;background:#fff;cursor:pointer;font-variant-numeric:tabular-nums}
+    .opt:disabled{opacity:.5;cursor:not-allowed}.opt:focus{outline:3px solid #3b82f6;outline-offset:2px}
+    .status{text-align:center;font-weight:700;margin-top:8px}
+    .ok{color:#15803d}.bad{color:#b91c1c}
+    .controls{display:flex;justify-content:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .debug{text-align:center;font-size:12px;color:#444;margin-top:6px}
+    .plus{fill:#2EA7FF}.square{fill:#E63946}.circle{fill:#4CAF50}.tri{fill:#F4B400}
+    .banner{margin-top:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px;font-size:14px}
+    .banner a{font-weight:700;color:#111}
+    .center-row{display:flex;justify-content:center}
+    .stack{display:inline-block;text-align:left}
+  </style>
+</head>
+
+<body>
+  <div class="nav">
+    <a class="brand" href="./index.html">Login or Sign up</a>
+  </div>
+
+  <div class="wrap">
+    <header>
+      <h1>Switch Challenge - Demo</h1>
+    </header>
+
+    <div class="label" style="visibility:hidden">Target</div>
+    <div id="topRow" class="row-grid"></div>
+
+    <div class="center-row">
+      <div class="stack">
+        <div class="label" style="visibility:hidden;">Options</div>
+        <div id="options" class="bar"></div>
+      </div>
+    </div>
+
+    <div class="label" style="visibility:hidden">Input</div>
+    <div id="bottomRow" class="row-grid"></div>
+
+    <div id="status" class="status">Locked</div>
+
+    <div class="controls">
+      <label style="font-size:13px"><input type="checkbox" id="showDebug"> Show expected code</label>
+    </div>
+    <div id="debug" class="debug" style="display:none"></div>
+  </div>
+
+  <script>
+    function initSwitchChallenge(){
+      function shapePlus(){return `<svg width="34" height="34" viewBox="0 0 24 24"><path class="plus" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg>`}
+      function shapeSquare(){return `<svg width="34" height="34" viewBox="0 0 24 24"><rect class="square" x="4" y="4" width="16" height="16" rx="3"/></svg>`}
+      function shapeCircle(){return `<svg width="34" height="34" viewBox="0 0 24 24"><circle class="circle" cx="12" cy="12" r="8"/></svg>`}
+      function shapeTriangle(){return `<svg width="34" height="34" viewBox="0 0 24 24"><path class="tri" d="M12 4l9 16H3z"/></svg>`}
+      const SHAPES={P:shapePlus,S:shapeSquare,C:shapeCircle,T:shapeTriangle};
+
+      function deriveCode(top,bottom){
+        const pos=new Map();
+        top.forEach((t,i)=>pos.set(t,i+1));
+        return bottom.map(t=>pos.get(t)).join('');
+      }
+      function renderRow(el,tokens){
+        el.innerHTML=tokens.map(t=>`<div class="tile">${SHAPES[t]()}</div>`).join('');
+      }
+      function shuffle(a){
+        a=a.slice();
+        for(let i=a.length-1;i>0;i--){
+          const j=Math.floor(Math.random()*(i+1));
+          [a[i],a[j]]=[a[j],a[i]];
+        }
+        return a;
+      }
+      function randomCode(){return shuffle([1,2,3,4]).join('')}
+      function makeOptions(correct){
+        const set=new Set([correct]);
+        while(set.size<3){
+          const c=randomCode();
+          if(c!==correct) set.add(c);
+        }
+        return shuffle([...set]);
+      }
+      function makeLevel(){
+        const TOK=['P','S','C','T'];
+        const bottom=shuffle(TOK);
+        const top=shuffle(TOK);
+        const correct=deriveCode(top,bottom);
+        const options=makeOptions(correct);
+        return {top,bottom,options,correct};
+      }
+
+      let lvl=null;
+
+      const topRow    = document.getElementById('topRow');
+      const bottomRow = document.getElementById('bottomRow');
+      const optionsEl = document.getElementById('options');
+      const status    = document.getElementById('status');
+      const debug     = document.getElementById('debug');
+      const showDebug = document.getElementById('showDebug');
+
+      showDebug.addEventListener('change',()=>{debug.style.display=showDebug.checked?'block':'none'});
+
+      function setOptionsEnabled(v){[...optionsEl.children].forEach(b=>b.disabled=!v);}
+
+      // CHANGED: allow keeping previous status text when showing next level
+      function loadNewLevel(resetStatus = true){
+        lvl = makeLevel();
+        renderRow(topRow,   lvl.top);
+        renderRow(bottomRow,lvl.bottom);
+
+        optionsEl.innerHTML='';
+        lvl.options.forEach(code=>{
+          const b=document.createElement('button');
+          b.className='opt';
+          b.type='button';
+          b.textContent=code;
+          b.addEventListener('click',()=>choose(code));
+          optionsEl.appendChild(b);
+        });
+
+        if (resetStatus) {
+          status.textContent='Locked';
+          status.className='status';
+        }
+        debug.textContent=`Expected code: ${lvl.correct}`;
+        setOptionsEnabled(true);
+      }
+
+      function choose(code){
+        setOptionsEnabled(false);
+        const correct = (code===lvl.correct);
+        status.textContent = correct ? 'Correct' : 'Incorrect';
+        status.className   = correct ? 'status ok' : 'status bad';
+        // show next question but keep the result text visible
+        loadNewLevel(false);
+        setOptionsEnabled(true);
+      }
+
+      loadNewLevel(true);
+    }
+
+    initSwitchChallenge();
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign-in complete</title>
+  <style>
+    body{font-family:system-ui,Arial;max-width:720px;margin:24px auto;padding:16px;background:#f7f7fb;color:#111}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#fff}
+    .muted{color:#666}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:700;text-decoration:none;color:#111}
+    .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+  </style>
+</head>
+<body
+  data-supabase-url="https://dtmqecmuynheejxnyrfn.supabase.co"
+  data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ"
+>
+  <div class="card" id="box">Finishing sign in…</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = window.supabase.createClient(
+      document.body.dataset.supabaseUrl,
+      document.body.dataset.supabaseAnonKey,
+      { auth:{ flowType:'pkce' } }
+    );
+
+    async function ensureProfile() {
+      const { data:{ session } } = await supabase.auth.getSession();
+      if (!session) return { error:'no session' };
+
+      const uid = session.user.id;
+      // try read existing
+      const { data: existing } = await supabase
+        .from('profiles').select('id,username').eq('id', uid).maybeSingle();
+      if (existing && existing.username) return { ok:true };
+
+      // pick a username: prefer stored choice, then email prefix
+      const fromLocal = localStorage.getItem('desired_username');
+      const fallback = (session.user.email || 'Player').split('@')[0];
+      const username = (fromLocal && fromLocal.length >= 3) ? fromLocal : fallback;
+
+      const { error } = await supabase.from('profiles').upsert({ id: uid, username }, { onConflict:'id' });
+      if (error) return { error };
+      return { ok:true };
+    }
+
+    (async function main(){
+      try{
+        // Handle OAuth/PKE callbacks if any
+        await supabase.auth.exchangeCodeForSession();
+
+        const prof = await ensureProfile();
+
+        const box = document.getElementById('box');
+        if (prof.error) {
+          box.innerHTML = `
+            <h2>Signed in, but couldn’t create profile</h2>
+            <p class="muted">${String(prof.error)}</p>
+            <a class="btn" href="./index.html">Back to home</a>
+          `;
+          return;
+        }
+
+        box.innerHTML = `
+          <h2>All set!</h2>
+          <p class="muted">Your account is verified and your profile is ready.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn" href="./index.html">Home</a>
+            <a class="btn primary" href="./SC_Home.html">Open Switch Challenge</a>
+          </div>
+        `;
+      }catch(e){
+        document.getElementById('box').innerHTML = `
+          <h2>Something went wrong</h2>
+          <p class="muted">${String(e)}</p>
+          <a class="btn" href="./index.html">Back to home</a>
+        `;
+      }
+    })();
+  </script>
+</body>
+</html>

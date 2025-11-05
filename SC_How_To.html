@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How to Play — Switch Challenge</title>
+  <style>
+    :root {
+      --ink:#111; --muted:#666; --line:#e5e7eb;
+      --card:#fff; --page:#f7f7fb; --radius:12px;
+      --blue:#2563eb;
+    }
+    html,body{margin:0}
+    body{font-family:system-ui,Arial;background:var(--page);color:var(--ink)}
+    .container{max-width:960px;margin:0 auto;padding:16px}
+    .nav{display:flex;align-items:center;margin:12px 0}
+    .brand{font-weight:800;font-size:18px;text-decoration:none;color:var(--ink)}
+    .brand:hover{text-decoration:underline}
+    h1{font-size:26px;margin:6px 0 14px}
+    h2{font-size:18px;margin:18px 0 8px}
+    p{margin:8px 0;color:#222}
+    .muted{color:var(--muted)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+    .grid{display:grid;gap:14px}
+    @media (min-width:720px){ .grid-2{grid-template-columns:1fr 1fr} }
+    .row{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+    .tile{width:60px;height:60px;border-radius:10px;background:#fff;display:grid;place-items:center;border:1px solid var(--line)}
+    .opt{min-width:88px;padding:10px 12px;font-size:20px;border-radius:10px;border:2px solid var(--line);background:#fff;cursor:pointer}
+    .opt:focus{outline:3px solid #3b82f6;outline-offset:2px}
+    .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 0 4px;text-align:center}
+    .status{text-align:center;font-weight:700;margin-top:8px}
+    .ok{color:#15803d}.bad{color:#b91c1c}
+    .kbd{background:#111;color:#fff;border-radius:6px;padding:2px 6px;font-size:12px}
+    .tip{border-left:4px solid var(--blue);padding-left:10px}
+    .code{font-family:ui-monospace,Consolas,monospace;background:#f0f2f6;border:1px solid var(--line);border-radius:8px;padding:10px}
+    .footer{margin:28px 0 8px;text-align:center;color:var(--muted);font-size:12px}
+    /* shapes */
+    .plus{fill:#2EA7FF}.square{fill:#E63946}.circle{fill:#4CAF50}.tri{fill:#F4B400}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav">
+      <a class="brand" href="./member_dashboard.html">Member Dashboard</a>
+    </div>
+
+    <h1>How to play</h1>
+    <p class="muted">A quick guide with a simple example. The goal is to match the bottom row of shapes to the top row. You do this by choosing the correct four digit code.</p>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>The idea</h2>
+        <ol>
+          <li><strong>Top row</strong> shows the target order of four shapes.</li>
+          <li><strong>Bottom row</strong> shows the current order.</li>
+          <li>Each four digit option tells you how to <em>map</em> shapes from top to bottom.</li>
+        </ol>
+        <p class="tip"><strong>Tip</strong> The digits are positions. For example, code <span class="kbd">2143</span> means: take 2nd shape from top, then 1st, then 4th, then 3rd to form the bottom.</p>
+      </div>
+
+      <div class="card">
+        <h2>Stages</h2>
+        <ul>
+          <li><strong>Stage 1</strong> No boxes. Pick the mapping that turns top into bottom.</li>
+          <li><strong>Stage 2</strong> One box appears. The box applies a hidden shuffle before or after your choice.</li>
+          <li><strong>Stage 3</strong> Two boxes may appear. They shuffle the order as well. Read the layout from top to bottom to know the order of effects.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Walk through example</h2>
+      <p>Below is a tiny interactive demo. Choose the right code. It will say Correct or Incorrect and give you a fresh example.</p>
+
+      <div class="label" id="lblTop" style="visibility:hidden">Target</div>
+      <div class="row" id="topRow"></div>
+
+      <div id="maybeBox" style="display:none">
+        <div class="label" style="visibility:hidden">Box</div>
+        <div class="row"><button id="boxChip" class="opt" type="button" aria-hidden="true">----</button></div>
+      </div>
+
+      <div class="label" id="lblOpts" style="visibility:hidden">Options</div>
+      <div class="row" id="options"></div>
+
+      <div class="label" id="lblBottom" style="visibility:hidden">Input</div>
+      <div class="row" id="bottomRow"></div>
+
+      <div id="status" class="status">Locked</div>
+
+      <details style="margin-top:10px">
+        <summary>Why code <span id="whyCode">----</span> is correct in this round</summary>
+        <div class="code" id="whyText">Explanation appears here after you answer.</div>
+      </details>
+    </div>
+
+    <p class="footer">Crandale Education & Careers</p>
+  </div>
+
+  <script>
+    // shape SVGs
+    const S = {
+      P: () => `<svg width="34" height="34" viewBox="0 0 24 24"><path class="plus" d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6z"/></svg>`,
+      S: () => `<svg width="34" height="34" viewBox="0 0 24 24"><rect class="square" x="4" y="4" width="16" height="16" rx="3"/></svg>`,
+      C: () => `<svg width="34" height="34" viewBox="0 0 24 24"><circle class="circle" cx="12" cy="12" r="8"/></svg>`,
+      T: () => `<svg width="34" height="34" viewBox="0 0 24 24"><path class="tri" d="M12 4l9 16H3z"/></svg>`
+    };
+    const TOK = ['P','S','C','T'];
+
+    const topRow    = document.getElementById('topRow');
+    const bottomRow = document.getElementById('bottomRow');
+    const optionsEl = document.getElementById('options');
+    const status    = document.getElementById('status');
+    const whyCodeEl = document.getElementById('whyCode');
+    const whyText   = document.getElementById('whyText');
+
+    const maybeBox  = document.getElementById('maybeBox');
+    const boxChip   = document.getElementById('boxChip');
+
+    const rnd = a => a[Math.floor(Math.random()*a.length)];
+    const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; };
+    const renderRow = (el, arr) => el.innerHTML = arr.map(t=>`<div class="tile">${S[t]()}</div>`).join('');
+    const applyCode = (arr, code) => code.split('').map(d => arr[+d-1]);
+
+    function invert(code){
+      const p = code.split('').map(d=>+d-1);
+      const inv = [];
+      for(let i=0;i<p.length;i++) inv[p[i]] = i+1;
+      return inv.join('');
+    }
+
+    function deriveCode(top,bottom){
+      const pos = new Map();
+      top.forEach((t,i)=>pos.set(t,i+1));
+      return bottom.map(t=>pos.get(t)).join('');
+    }
+
+    function optionSet(correct){
+      const seen=new Set([correct]);
+      while(seen.size<3){
+        const x = shuffle([1,2,3,4]).join('');
+        if(x!==correct) seen.add(x);
+      }
+      return shuffle([...seen]);
+    }
+
+    let state = null;
+
+    function newRound(){
+      const stage = Math.random() < 0.5 ? 1 : 2;
+      const top = shuffle(TOK);
+      const bottom = shuffle(TOK);
+
+      let correct, explain = '', boxCode = null, boxFirst = true;
+
+      if(stage === 1){
+        maybeBox.style.display='none';
+        correct = deriveCode(top, bottom);
+        explain = `Stage 1 example. We need a mapping that takes the positions from the top row to match the bottom row. The correct code is ${correct}.`;
+      }else{
+        maybeBox.style.display='block';
+        boxCode = shuffle([1,2,3,4]).join('');
+        boxChip.textContent = boxCode;
+        boxFirst = Math.random() < 0.5;
+
+        if(boxFirst){
+          const afterBox = applyCode(top, boxCode);
+          correct = deriveCode(afterBox, bottom);
+          explain = `Stage 2 example with the box above options. The box applies first with code ${boxCode}, then your choice maps that result to the bottom row.`;
+        }else{
+          const inv = invert(boxCode);
+          const need = applyCode(bottom, inv);
+          correct = deriveCode(top, need);
+          explain = `Stage 2 example with the box below options. Your choice applies first, then the box applies. To solve we undo the box with inverse ${inv}, then map top to that target.`;
+        }
+      }
+
+      state = {stage, top, bottom, correct, boxCode, boxFirst};
+      renderRound(explain);
+    }
+
+    function renderRound(explain){
+      renderRow(topRow, state.top);
+      renderRow(bottomRow, state.bottom);
+
+      const opts = optionSet(state.correct);
+      optionsEl.innerHTML = '';
+      opts.forEach(c=>{
+        const b=document.createElement('button');
+        b.className='opt'; b.textContent=c;
+        b.addEventListener('click', ()=> choose(c));
+        optionsEl.appendChild(b);
+      });
+
+      status.textContent = 'Locked';
+      status.className   = 'status';
+      whyCodeEl.textContent = state.correct;
+      whyText.textContent = explain;
+    }
+
+    function choose(code){
+      const ok = (code === state.correct);
+      status.textContent = ok ? 'Correct' : 'Incorrect';
+      status.className   = ok ? 'status ok' : 'status bad';
+      setTimeout(()=> newRound(), 200);
+    }
+
+    newRound();
+  </script>
+</body>
+</html>

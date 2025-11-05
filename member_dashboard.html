@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --ink:#0f172a; --muted:#64748b; --line:#e5e7eb; --page:#f7f7fb; --card:#ffffff;
+      --blue:#2563eb; --blue-700:#1d4ed8; --green:#16a34a; --green-700:#15803d;
+      --radius:14px;
+    }
+    html,body{margin:0}
+    body{font-family:system-ui,Arial;background:var(--page);color:var(--ink)}
+    a{color:inherit;text-decoration:none}
+
+    .wrap{max-width:960px;margin:24px auto;padding:0 16px}
+    .card{border:1px solid var(--line);border-radius:var(--radius);padding:14px;background:#fff}
+
+    /* nicer Home button */
+    .toprow{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 14px;border-radius:12px;border:1px solid var(--line);
+      background:#fff;font-weight:800;letter-spacing:.2px
+    }
+    .btn:hover{box-shadow:0 6px 18px rgba(0,0,0,.06);transform:translateY(-1px)}
+    .btn-home{
+      border:0;background:linear-gradient(#fff,#fff) padding-box,
+                 linear-gradient(135deg,var(--blue),var(--blue-700)) border-box;
+      border:2px solid transparent;
+    }
+
+    /* grid */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}}
+
+    .tile{
+      display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;
+      height:160px;text-align:center;border:1px solid var(--line);border-radius:var(--radius);
+      background:var(--card);font-weight:800;font-size:18px;transition:box-shadow .2s,transform .08s ease;
+    }
+    .tile:hover{box-shadow:0 10px 24px rgba(0,0,0,.08);transform:translateY(-1px)}
+    .tile.disabled{opacity:.55;pointer-events:none}
+
+    /* live tile styling */
+    .tile-live{
+      position:relative;
+      background:
+        radial-gradient(900px 380px at 10% -10%, rgba(29,78,216,.12), transparent),
+        radial-gradient(600px 280px at 100% 0, rgba(37,99,235,.10), transparent),
+        #fff;
+      border:1px solid rgba(37,99,235,.25);
+    }
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:12px;font-weight:900;color:#fff;
+      background:linear-gradient(135deg,var(--green),var(--green-700));
+      padding:6px 10px;border-radius:999px;
+      box-shadow:0 8px 18px rgba(22,163,74,.28);
+    }
+    .muted{color:var(--muted);font-size:14px}
+  </style>
+</head>
+<body
+  data-supabase-url="https://dtmqecmuynheejxnyrfn.supabase.co"
+  data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ"
+>
+  <div class="wrap">
+    <div id="gate" class="card">Loading…</div>
+
+    <div id="content" style="display:none">
+      <div class="toprow">
+        <a class="btn btn-home" href="./index.html">
+          <span>Home</span>
+        </a>
+      </div>
+
+      <section class="grid">
+        <!-- Live tile -->
+        <a class="tile tile-live" href="./SC_Home.html">
+          <div style="font-size:20px">Switch Challenge</div>
+          <div class="badge" aria-label="Now live">● Now live</div>
+          <div class="muted">Ranked mode and practice</div>
+        </a>
+
+        <!-- Coming soon tiles -->
+        <div class="tile disabled">
+          <div>Numerical Reasoning</div>
+          <div class="muted">Coming soon</div>
+        </div>
+        <div class="tile disabled">
+          <div>Verbal Reasoning</div>
+          <div class="muted">Coming soon</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = document.body.dataset.supabaseUrl;
+    const SUPABASE_ANON_KEY = document.body.dataset.supabaseAnonKey;
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce' } });
+
+    const gate = document.getElementById('gate');
+    const content = document.getElementById('content');
+
+    async function ensureMember() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        gate.className = 'card err';
+        gate.innerHTML = 'No session. Please <a href="./index.html">log in</a>.';
+        return false;
+      }
+      const user = session.user;
+      if (!user.email_confirmed_at) {
+        gate.className = 'card warn';
+        gate.innerHTML = 'Signed in but email not verified. Open the link we sent you, then refresh this page.';
+        return false;
+      }
+      return true;
+    }
+
+    (async function main(){
+      const ok = await ensureMember();
+      if (!ok) return;
+      gate.style.display = 'none';
+      content.style.display = 'block';
+    })();
+  </script>
+</body>
+</html>

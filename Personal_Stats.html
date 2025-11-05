@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Personal Stats</title>
+  <style>
+    body{font-family:system-ui,Arial;max-width:960px;margin:24px auto;padding:16px;background:#f7f7fb;color:#111}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#fff;margin-bottom:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .kpi{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fff;text-align:center}
+    .kpi .v{font-size:28px;font-weight:800}
+    .muted{color:#666}
+    .nav{display:flex;align-items:center;margin-bottom:10px}
+    .brand{font-weight:800;font-size:18px;text-decoration:none;color:#111;letter-spacing:.2px}
+    .brand:hover{text-decoration:underline}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;font-variant-numeric:tabular-nums}
+    .warn{color:#b45309;font-weight:700}
+    .err{color:#b91c1c;font-weight:700}
+  </style>
+</head>
+<body
+  data-supabase-url="https://dtmqecmuynheejxnyrfn.supabase.co"
+  data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0bXFlY211eW5oZWVqeG55cmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEyNDk3NzksImV4cCI6MjA3NjgyNTc3OX0.E06vwUuYIJqGQlw3ZazaG3W8lfoqaCeEVf_KeUhg0oQ"
+>
+  <div class="nav">
+    <a class="brand" href="./member_dashboard.html">Member Dashboard</a>
+  </div>
+
+  <div id="gate" class="card">Loading…</div>
+
+  <div id="content" style="display:none">
+    <div class="card">
+      <h2 style="margin:0 0 6px 0">Your Switch Challenge stats</h2>
+      <div class="muted">Mode, six minute full</div>
+      <div class="grid" style="margin-top:12px">
+        <div class="kpi"><div class="v" id="kRuns">0</div><div class="muted">Total runs</div></div>
+        <div class="kpi"><div class="v" id="kBest">1</div><div class="muted">Best level</div></div>
+        <div class="kpi"><div class="v" id="kAcc">0%</div><div class="muted">Accuracy</div></div>
+        <div class="kpi"><div class="v" id="kTime">00:00:00</div><div class="muted">Total time</div></div>
+        <div class="kpi"><div class="v" id="kRuns24">0</div><div class="muted">Runs, last 24h</div></div>
+        <div class="kpi"><div class="v" id="kBest24">0</div><div class="muted">Best, last 24h</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 10px 0">Recent runs</h3>
+      <div class="muted" id="emptyMsg" style="display:none">No runs yet. Play a round on the six minute mode to get started.</div>
+      <table id="runsTable" style="display:none">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Duration</th>
+            <th>Level</th>
+            <th>Correct</th>
+            <th>Incorrect</th>
+            <th>Ended</th>
+          </tr>
+        </thead>
+        <tbody id="runsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = document.body.dataset.supabaseUrl;
+    const SUPABASE_ANON_KEY = document.body.dataset.supabaseAnonKey;
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce' } });
+
+    const gate=document.getElementById('gate');
+    const content=document.getElementById('content');
+
+    function fmtTime(total){
+      const h=Math.floor(total/3600), m=Math.floor((total%3600)/60), s=total%60;
+      const pad=n=>String(n).padStart(2,'0');
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    (async function main(){
+      const { data:{ session } } = await supabase.auth.getSession();
+      if(!session){
+        gate.className='card err';
+        gate.innerHTML='No session. Please <a href="./index.html">log in</a>.';
+        return;
+      }
+      if(!session.user.email_confirmed_at){
+        gate.className='card warn';
+        gate.innerHTML='Signed in but email not verified. Open the link we sent you, then refresh this page.';
+        return;
+      }
+
+      gate.style.display='none'; content.style.display='block';
+
+      const uid=session.user.id;
+
+      const { data: myPlays, error } = await supabase
+        .from('plays')
+        .select('duration_seconds, levels_reached, correct, incorrect, ended_at, ended_reason')
+        .eq('user_id', uid)
+        .order('ended_at', { ascending:false });
+
+      if(error){
+        console.error(error);
+        document.getElementById('emptyMsg').style.display='block';
+        return;
+      }
+
+      const runs = myPlays || [];
+      const totalRuns = runs.length;
+      const bestLevel = runs.length ? Math.max(...runs.map(p=>p.levels_reached)) : 1;
+      const totalTime = runs.reduce((a,p)=>a+(p.duration_seconds||0),0);
+      const totalCorrect = runs.reduce((a,p)=>a+(p.correct||0),0);
+      const totalIncorrect = runs.reduce((a,p)=>a+(p.incorrect||0),0);
+      const attempts = totalCorrect + totalIncorrect;
+      const accuracy = attempts ? Math.round((totalCorrect/attempts)*100) : 0;
+
+      const last24 = runs.filter(p => Date.now() - new Date(p.ended_at).getTime() <= 24*60*60*1000);
+      const runs24 = last24.length;
+      const best24 = last24.length ? Math.max(...last24.map(p=>p.levels_reached)) : 0;
+
+      document.getElementById('kRuns').textContent = totalRuns;
+      document.getElementById('kBest').textContent = bestLevel;
+      document.getElementById('kAcc').textContent  = `${accuracy}%`;
+      document.getElementById('kTime').textContent = fmtTime(totalTime);
+      document.getElementById('kRuns24').textContent = runs24;
+      document.getElementById('kBest24').textContent = best24;
+
+      if(runs.length===0){
+        document.getElementById('emptyMsg').style.display='block';
+        return;
+      }
+
+      const body=document.getElementById('runsBody');
+      const table=document.getElementById('runsTable');
+      table.style.display='table';
+      body.innerHTML = runs.slice(0,10).map(p=>{
+        const d = new Date(p.ended_at);
+        const dd = d.toLocaleString();
+        const dur = fmtTime(p.duration_seconds||0);
+        const ended = p.ended_reason || '';
+        return `<tr>
+          <td>${dd}</td>
+          <td>${dur}</td>
+          <td>${p.levels_reached}</td>
+          <td>${p.correct}</td>
+          <td>${p.incorrect}</td>
+          <td>${ended}</td>
+        </tr>`;
+      }).join('');
+    })();
+  </script>
+</body>
+</html>
